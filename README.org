@@ -1,1 +1,38 @@
-#+TITLE: Readme
+#+TITLE: Rust Maths
+#+AUTOR: evf (eliseuv816@gmail.com)
+#+DATE: <2021-10-09 Sat>
+
+Some mathematical goodies learning Rust's features such as its trait system and ownership.
+
+* Modules
+
+** Algebra
+
+Simple representation of usual algebraic structures using Rust's traits.
+
++ Groupoids:
+  Group-like algebraic structures built from a set closed under a binary operation.
+  - Magma
+    Set closed under a binary operation
+  - Semigroup
+    Associative magma
+  - Monoid
+    Semigroup with unit element
+  - Group
+    Monoid with an inverse for every element
+  - Abelian group
+    Commutative group
++ Ringoids:
+  Ring-like algebraic structures built from a set closed under two binary operations, often called addition and multiplication, with multiplication being distributive over addition.
+  - Ringoid
+    Set with two binary operations, often called addition and multiplication, with multiplication being distributive over addition
+  - Semiring
+    Ringoid such that is also a monoid under each binary operation (the multiplicative identity is usually called 1 and the additive identity is usually called 0)
+  - Near ring
+    Semiring whose addition monoid is a group
+  - Ring
+    Semiring whose addition monoid is an abelain group
+  - Commutative ring
+    Ring whose multiplication operation is commutative
+  - Field
+    Commutative ring which contains a multiplicative inverse for every nonzero element (i.e., except for the identity of the addition monoid)

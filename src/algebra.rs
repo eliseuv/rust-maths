@@ -253,7 +253,7 @@ pub mod ringoid {
     //! - Near ring: semiring whose addition monoid is a group
     //! - Ring: semiring whose addition monoid is an abelain group
     //! - Commutative ring: ring whose multiplication operation is commutative
-    //! - Field: Commutative ring which contains a multiplicative inverse for every nonzero element (i.e., except for the identity of the addition monoid)
+    //! - Field: commutative ring which contains a multiplicative inverse for every nonzero element (i.e., except for the identity of the addition monoid)
 
     //=========//
     // Ringoid //

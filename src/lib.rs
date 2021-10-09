@@ -4,6 +4,8 @@
 
 // Abstract algebra
 pub mod algebra;
+// Topology
+pub mod topology {}
 // Linear algebra
 pub mod linalg {}
 // Matrices numerical methods
