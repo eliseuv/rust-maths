@@ -2,7 +2,7 @@
 #+AUTOR: evf (eliseuv816@gmail.com)
 #+DATE: <2021-10-09 Sat>
 
-Some mathematical goodies learning Rust's features such as its trait system and ownership.
+Some mathematical goodies implemented as an exercice for learning Rust.
 
 * Modules
 

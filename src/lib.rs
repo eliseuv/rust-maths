@@ -1,6 +1,7 @@
 //! Physica is a scientific library written as personal project for learning the Rust language.
 
 #![feature(marker_trait_attr)]
+//#![feature(min_specialization)]
 
 // Abstract algebra
 pub mod algebra;
