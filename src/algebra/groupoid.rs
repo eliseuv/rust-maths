@@ -10,7 +10,9 @@
 
 use super::BaseSet;
 
-pub mod propertie
+//============//
+// Properties //
+//============//
 
 //==================//
 // Binary Operation //
@@ -21,14 +23,18 @@ pub mod propertie
 //     op(a,b) ↦ a·b
 // ∀ a,b ∈ S, a∙b ∈ S
 
-// Binary operation defined over a given set
 pub trait AbstractBinaryOperation<Set: BaseSet> {
     fn op(lhs: Set, rhs: Set) -> Set;
 }
 
-// Binary operation defined for a given set
-pub trait BinaryOperation {
-    fn op(&self, other: Self);
+pub trait BinaryOperation: BaseSet {
+    fn op(&self, other: Self) -> Self;
+}
+
+impl<Set: BinaryOperation> AbstractBinaryOperation<Set> for Set {
+    fn op(lhs: Set, rhs: Set) -> Set {
+        lhs.op(rhs)
+    }
 }
 
 //==============================//
@@ -37,57 +43,79 @@ pub trait BinaryOperation {
 
 // ∀ a,b,c ∈ S, (a∙b)∙c = a∙(b∙c)
 
-// Associative binary operation defined over a given set
 #[marker]
 pub trait AbstractAssociativeBinaryOperation<Set: BaseSet>: AbstractBinaryOperation<Set> {}
 
-// Associative binary operation defined in a given set
-#[marke]
+#[marker]
+pub trait AssociativeBinaryOperation: BinaryOperation {}
+
+impl<Set: AssociativeBinaryOperation> AbstractAssociativeBinaryOperation<Set> for Set {}
 
 //==============================//
 // Commutative Binary Operation //
 //==============================//
 
-// Commutative binary operation defined over a given set
 // ∀ a,b ∈ S, a∙b = b∙a
+
 #[marker]
 pub trait AbstractCommutativeBinaryOperation<Set: BaseSet>: AbstractBinaryOperation<Set> {}
 
-// TODO: Auto implement BinOp if CommBinOp is implemented without collision
-// If associative binary operation trait is satified so is binary operation
-/*
-impl<T, Set> BinaryOperation<Set> for T
-where
-    Set: BaseSet,
-    T: AssociativeBinaryOperation<Set>,
-{
-    fn op(lhs: Set, rhs: Set) -> Set {
-        AssociativeBinaryOperation::<Set>::op(lhs, rhs)
-    }
-}
- */
+#[marker]
+pub trait CommutativeBinaryOperation: BinaryOperation {}
+
+impl<Set: CommutativeBinaryOperation> AbstractCommutativeBinaryOperation<Set> for Set {}
 
 //==================//
 // Identity Element //
 //==================//
 
-// Defines the identity element of a given set
-pub trait IdentityElement<Set: BaseSet>: AbstractBinaryOperation<Set> {
-    // ∃! e ∈ S, ∀ a ∈ S, a∙e = e∙a = a
+// ∃! e ∈ S, ∀ a ∈ S, a∙e = e∙a = a
+
+pub trait AbstractIdentityElement<Set: BaseSet>: AbstractBinaryOperation<Set> {
     fn id() -> Set;
+}
+
+pub trait IdentityElement: BinaryOperation {
+    fn id() -> Self;
+    fn set_id(&mut self) {
+        *self = Self::id()
+    }
+    fn is_id(&self) -> bool {
+        self == &Self::id()
+    }
+}
+
+impl<Set: IdentityElement> AbstractIdentityElement<Set> for Set {
+    fn id() -> Set {
+        Set::id()
+    }
 }
 
 //=================//
 // Inverse Element //
 //=================//
 
-// Returns the inverse of ANY given element in a set
-pub trait InverseElement<Set: BaseSet>:
-    AbstractBinaryOperation<Set> + IdentityElement<Set>
+// ∀ a ∈ S, ∃! a' ∈ S, a∙a' = a'∙a = e
+
+pub trait AbstractInverseElement<Set: BaseSet>:
+    AbstractBinaryOperation<Set> + AbstractIdentityElement<Set>
 {
-    // ∀ a ∈ S, ∃! a' ∈ S, a∙a' = a'∙a = e
     fn inv(a: Set) -> Set;
 }
+
+pub trait InverseElement: BinaryOperation + IdentityElement {
+    fn inv(&self) -> Self;
+}
+
+impl<Set: InverseElement> AbstractInverseElement<Set> for Set {
+    fn inv(a: Set) -> Set {
+        a.inv()
+    }
+}
+
+//============//
+// Structures //
+//============//
 
 //=======//
 // Magma //
@@ -95,38 +123,9 @@ pub trait InverseElement<Set: BaseSet>:
 
 // Magma: set closed under a binary operation
 
-// Abstract magma structure over a given set
-#[marker]
-pub trait AbstractMagma<Set: BaseSet>: AbstractBinaryOperation<Set> {}
+pub trait AbstractMagma<Set: BaseSet> = AbstractBinaryOperation<Set>;
 
-// All types defining the required properties, satisfy abstract trait
-impl<T, Set> AbstractMagma<Set> for T
-where
-    Set: BaseSet,
-    T: AbstractBinaryOperation<Set>,
-{
-}
-
-// Magma trait object is a set that implements a binary operation
-pub trait Magma: BaseSet + AbstractBinaryOperation<Self>
-where
-    Self: Sized,
-{
-    fn op(self, other: Self) -> Self;
-}
-
-// Implement trait object for all sets
-impl<Set> Magma for Set
-where
-    Set: BaseSet + AbstractBinaryOperation<Set>,
-{
-    fn op(self, other: Set) -> Set {
-        Set::op(self, other)
-    }
-}
-
-// Trait object implements abstract trait
-impl<Set: Magma> AbstractMagma<Set> for Set {}
+pub trait Magma = BinaryOperation;
 
 //===========//
 // Semigroup //
@@ -134,27 +133,10 @@ impl<Set: Magma> AbstractMagma<Set> for Set {}
 
 // Semigroup: associative magma
 
-// Abstract semigroup over a given set
-#[marker]
-pub trait AbstractSemigroup<Set: BaseSet>: AbstractAssociativeBinaryOperation<Set> {}
+pub trait AbstractSemigroup<Set: BaseSet> =
+    AbstractMagma<Set> + AbstractAssociativeBinaryOperation<Set>;
 
-// All types defining the required properties, satisfy abstract trait
-impl<T, Set> AbstractSemigroup<Set> for T
-where
-    Set: BaseSet,
-    T: AbstractAssociativeBinaryOperation<Set>,
-{
-}
-
-// Semigroup trait object is a set that implements an associative binary operation
-#[marker]
-pub trait Semigroup: Magma + AbstractAssociativeBinaryOperation<Self> {}
-
-// Once trait object is implemented, also implement abstract properties
-impl<Set: Semigroup> AbstractAssociativeBinaryOperation<Set> for Set {}
-
-// Trait object implements abstract trait
-impl<Set: BaseSet + Semigroup> AbstractSemigroup<Set> for Set {}
+pub trait Semigroup = Magma + AssociativeBinaryOperation;
 
 //========//
 // Monoid //
@@ -162,39 +144,9 @@ impl<Set: BaseSet + Semigroup> AbstractSemigroup<Set> for Set {}
 
 // Monoid: semigroup with identity element
 
-// Abstract monoid over a given set
-#[marker]
-pub trait AbstractMonoid<Set: BaseSet>: AbstractSemigroup<Set> + IdentityElement<Set> {}
+pub trait AbstractMonoid<Set: BaseSet> = AbstractSemigroup<Set> + AbstractIdentityElement<Set>;
 
-// All types defining the required properties, satisfy abstract trait
-impl<T, Set> AbstractMonoid<Set> for T
-where
-    Set: BaseSet,
-    T: AbstractSemigroup<Set> + IdentityElement<Set>,
-{
-}
-
-// Monoid trait object
-pub trait Monoid: Semigroup + IdentityElement<Self> {
-    // Get identity
-    fn id() -> Self;
-    // Set to identity
-    fn set_id(&mut self) {
-        *self = Monoid::id();
-    }
-    // Test if is identity
-    fn is_id(&self) -> bool;
-}
-
-// Once trait object is implemented, also implement abstract properties
-impl<Set: Monoid> IdentityElement<Set> for Set {
-    fn id() -> Set {
-        Monoid::id()
-    }
-}
-
-// Trait object implements abstract trait
-impl<Set: Monoid> AbstractMonoid<Set> for Set {}
+pub trait Monoid = Semigroup + IdentityElement;
 
 //====================//
 // Commutative monoid //
@@ -202,30 +154,10 @@ impl<Set: Monoid> AbstractMonoid<Set> for Set {}
 
 // Commutative monoid: monoid whose binary operation is also commutative
 
-// Abstract commutative monoid over a set
-#[marker]
-pub trait AbstractCommutativeMonoid<Set: BaseSet>:
-    AbstractMonoid<Set> + AbstractCommutativeBinaryOperation<Set>
-{
-}
+pub trait AbstractCommutativeMonoid<Set: BaseSet> =
+    AbstractMonoid<Set> + AbstractCommutativeBinaryOperation<Set>;
 
-// All types defining the required properties, satisfy abstract trait
-impl<T, Set> AbstractCommutativeMonoid<Set> for T
-where
-    Set: BaseSet,
-    T: AbstractMonoid<Set> + AbstractCommutativeBinaryOperation<Set>,
-{
-}
-
-// Commutative monoid trait object
-#[marker]
-pub trait CommutativeMonoid: Monoid + AbstractCommutativeBinaryOperation<Self> {}
-
-// Once trait object is implemented, also implement abstract properties
-impl<Set: CommutativeMonoid> AbstractCommutativeBinaryOperation<Set> for Set {}
-
-// Trait object implements abstract trait
-impl<Set: CommutativeMonoid> AbstractCommutativeMonoid<Set> for Set {}
+pub trait CommutativeMonoid = Monoid + CommutativeBinaryOperation;
 
 //=======//
 // Group //
@@ -233,32 +165,9 @@ impl<Set: CommutativeMonoid> AbstractCommutativeMonoid<Set> for Set {}
 
 // Group: monoid for which every element has an inverse
 
-// Abstract group over a set
-#[marker]
-pub trait AbstractGroup<Set: BaseSet>: AbstractMonoid<Set> + InverseElement<Set> {}
+pub trait AbstractGroup<Set: BaseSet> = AbstractMonoid<Set> + AbstractInverseElement<Set>;
 
-// All types defining the required properties, satisfy abstract trait
-impl<T, Set> AbstractGroup<Set> for T
-where
-    Set: BaseSet,
-    T: AbstractMonoid<Set> + InverseElement<Set>,
-{
-}
-
-// Group trait object
-pub trait Group: Monoid + InverseElement<Self> {
-    fn inv(&self) -> Self;
-}
-
-// Once trait object is implemented, also implement abstract properties
-impl<Set: Group> InverseElement<Set> for Set {
-    fn inv(a: Set) -> Set {
-        a.inv()
-    }
-}
-
-// Trait object implements abstract trait
-impl<Set: Group> AbstractGroup<Set> for Set {}
+pub trait Group = Monoid + InverseElement;
 
 //===============//
 // Abelian Group //
@@ -266,33 +175,16 @@ impl<Set: Group> AbstractGroup<Set> for Set {}
 
 // Abelian group: group whose binary operation is commutative
 
-// Abstract abelian group over a set
-#[marker]
-pub trait AbstractAbelianGroup<Set: BaseSet>:
-    AbstractCommutativeMonoid<Set> + InverseElement<Set>
-{
-}
+pub trait AbstractAbelianGroup<Set: BaseSet> =
+    AbstractGroup<Set> + AbstractCommutativeBinaryOperation<Set>;
 
-// All types defining the required properties, satisfy abstract trait
-impl<Set, T> AbstractAbelianGroup<Set> for T
-where
-    Set: BaseSet,
-    T: AbstractCommutativeMonoid<Set> + InverseElement<Set>,
-{
-}
-
-// Abelian group trait object
-#[marker]
-pub trait AbelianGroup: CommutativeMonoid + InverseElement<Self> {}
-
-// Abelian group trait object also implements abstract trait
-impl<Set: AbelianGroup> AbstractAbelianGroup<Set> for Set {}
+pub trait AbelianGroup = Group + CommutativeBinaryOperation;
 
 pub mod instances {
     //! Example implementations of groupoids
     //!
 
-    use super::{AbstractBinaryOperation, IdentityElement, InverseElement};
+    use super::*;
 
     // Cyclic group of order 2 (Z_2)
     // U ∙ A = A ∙ U = A
@@ -303,14 +195,14 @@ pub mod instances {
         A,
     }
 
-    impl AbstractBinaryOperation<Self> for Z2 {
-        fn op(lhs: Self, rhs: Self) -> Self {
-            match lhs {
-                Z2::U => match rhs {
+    impl BinaryOperation for Z2 {
+        fn op(&self, other: Self) -> Self {
+            match self {
+                Z2::U => match other {
                     Z2::U => Z2::U,
                     Z2::A => Z2::A,
                 },
-                Z2::A => match rhs {
+                Z2::A => match other {
                     Z2::U => Z2::A,
                     Z2::A => Z2::U,
                 },
@@ -318,15 +210,18 @@ pub mod instances {
         }
     }
 
-    impl IdentityElement<Self> for Z2 {
+    impl AssociativeBinaryOperation for Z2 {}
+    impl CommutativeBinaryOperation for Z2 {}
+
+    impl IdentityElement for Z2 {
         fn id() -> Self {
             Z2::U
         }
     }
 
-    impl InverseElement<Self> for Z2 {
-        fn inv(a: Self) -> Self {
-            match a {
+    impl InverseElement for Z2 {
+        fn inv(&self) -> Self {
+            match self {
                 Z2::U => Z2::U,
                 Z2::A => Z2::A,
             }
@@ -338,14 +233,16 @@ pub mod instances {
 #[cfg(test)]
 mod tests {
 
-    use super::{instances::*, Group};
+    use super::{instances::*, AbelianGroup};
 
-    fn test_group<Set: Group>(g: Set) {}
+    fn is_abelian_group<Set: AbelianGroup>() {}
 
     #[test]
     fn groups() {
         let u = Z2::U;
         let a = Z2::A;
+
+        is_abelian_group::<Z2>();
         // Test binary operation
         // Test unity
         // Test inverses

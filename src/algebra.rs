@@ -15,7 +15,7 @@
 
 // A set must have the size of its elements known at compile time and have elements distinguishable from one another
 #[marker]
-pub trait BaseSet {}
+pub trait BaseSet: Sized + PartialEq {}
 
 // Every type that satisfies these conditions can be considered a set
 impl<Set> BaseSet for Set where Set: Sized + PartialEq {}
