@@ -9,173 +9,192 @@
 //! - Commutative ring: ring whose multiplication operation is commutative
 //! - Field: commutative ring which contains a multiplicative inverse for every nonzero element (i.e., except for the identity of the addition monoid)
 
-use std::ops::{Add, AddAssign, Mul, MulAssign, Neg};
+use super::BaseSet;
+
+// TODO: Use traits defined in the groupoid module.
 
 //=========//
 // Ringoid //
 //=========//
 
-// Ringoid is a set with two binary operations, often called addition and multiplication, with multiplication being distributive over addition
+// Here we use the same name for the property and the simplest structure that implements it.
+// Ringoid: set with two binary operations, often called <<addition>> and <<multiplication>>, with <<multiplication>> being distributive over <<addition>>.
 // ∀ a,b ∈ S, a∙b ∈ S, a+b ∈ S
 // ∀ a,b,c ∈ S, a∙(b+c) = a∙b+a∙c
-pub trait AbstractRingoid<Set> {
-    fn add(lhs: Set, rhs: Set) -> Set;
-    fn mult(lhs: Set, rhs: Set) -> Set;
+
+pub trait AbstractRingoid<Set: BaseSet> {
+    fn add(lhs: &Set, rhs: &Set) -> Set;
+    fn mult(lhs: &Set, rhs: &Set) -> Set;
 }
 
-// Ringoid trait object
-pub trait Ringoid: Sized + Mul<Output = Self> + MulAssign + Add<Output = Self> + AddAssign {}
+pub trait Ringoid: BaseSet {
+    fn add(&self, other: &Self) -> Self;
+    fn mult(&self, other: &Self) -> Self;
+}
 
-// Ringoid tait objects implement ringoid abstract trait
 impl<Set: Ringoid> AbstractRingoid<Set> for Set {
-    fn add(lhs: Set, rhs: Set) -> Set {
-        lhs + rhs
+    fn add(lhs: &Set, rhs: &Set) -> Set {
+        lhs.add(rhs)
     }
-
-    fn mult(lhs: Set, rhs: Set) -> Set {
-        lhs * rhs
+    fn mult(lhs: &Set, rhs: &Set) -> Set {
+        lhs.mult(rhs)
     }
 }
 
-// The ringoid trait is automatically satisfied for every sized object that has the usual multiplication and addition operators defined
-impl<Set> Ringoid for Set where
-    Set: Sized + Mul<Output = Self> + MulAssign + Add<Output = Self> + AddAssign
-{
-}
+//=============================//
+// Commutativity of Operations //
+//=============================//
 
-//==========//
-// Semiring //
-//==========//
+// Commutativity of <<addition>>
+// ∀ a,b ∈ S, a+b = b+a
+#[marker]
+pub trait AbstractRingoidCommutativeAddition<Set: BaseSet>: AbstractRingoid<Set> {}
+#[marker]
+pub trait RingoidCommutativeAddition: Ringoid {}
+impl<Set: RingoidCommutativeAddition> AbstractRingoidCommutativeAddition<Set> for Set {}
 
-// Semiring is a ringoid such that S is a monoid under each of the two operations
-// This implies the existence of an identity for each operation
+// Commutativity of <<Multiplication>>
+// ∀ a,b ∈ S, a·b = b·a
+#[marker]
+pub trait AbstractRingoidCommutativeMultiplication<Set: BaseSet>: AbstractRingoid<Set> {}
+#[marker]
+pub trait RingoidCommutativeMultiplication: Ringoid {}
+impl<Set: RingoidCommutativeMultiplication> AbstractRingoidCommutativeMultiplication<Set> for Set {}
+
+//====================//
+// Identity Elemenets //
+//====================//
+
+// Existence of identity elements for each of the two ringoid's binary operations.
+// Often called 1 for the <<multiplication>> and 0 for the <<addition>>.
 // ∃! 1 ∈ S, ∀ a ∈ S, a∙1 = 1∙a = a
 // ∃! 0 ∈ S, ∀ a ∈ S, a+0 = 0+a = a
-pub trait AbstractSemiring<Set>: AbstractRingoid<Set> {
-    // Multiplicative identity
-    fn id_mult() -> Set;
-    // Additive identity
+
+pub trait AbstractRingoidIdentities<Set: BaseSet>: AbstractRingoid<Set> {
     fn id_add() -> Set;
+    fn id_mult() -> Set;
 }
 
-// Semiring trait object
-pub trait Semiring: Ringoid + AbstractSemiring<Self> {
-    // Get multiplicative identity
-    fn get_id_mult() -> Self;
-    // Set to multiplicative identity
-    fn set_id_mult(&mut self) {
-        *self = Self::id_mult();
-    }
-    // Test if is multiplicative identity
-    fn is_id_mult(&self) -> bool;
-    // Get additive identity
-    fn get_id_add() -> Self;
-    // Set to additive identity
+pub trait RingoidIdentities: Ringoid {
+    fn id_add() -> Self;
     fn set_id_add(&mut self) {
         *self = Self::id_add();
     }
-    // Test if is additive identity
-    fn is_id_add(&self) -> bool;
+    fn is_id_add(&self) -> bool {
+        self == &Self::id_add()
+    }
+    fn id_mult() -> Self;
+    fn set_id_mult(&mut self) {
+        *self = Self::id_mult();
+    }
+    fn is_id_mult(&self) -> bool {
+        self == &Self::id_add()
+    }
 }
 
-// Semiring trait objects implement semiring abstract trait
-impl<Set: Semiring> AbstractSemiring<Set> for Set {
-    fn id_mult() -> Set {
-        Self::get_id_mult()
-    }
+impl<Set: RingoidIdentities> AbstractRingoidIdentities<Set> for Set {
     fn id_add() -> Set {
-        Self::get_id_add()
+        Set::id_add()
+    }
+    fn id_mult() -> Set {
+        Set::id_mult()
     }
 }
 
-//===========//
-// Near Ring //
-//===========//
+//==================================//
+// Inverse Element for <<Addition>> //
+//==================================//
 
-// Near-ring is a semiring whose additive monoid is a group
-// This implies that every element has an inverse with respect to addition
-// ∀ a ∈ S, ∃! -a, a+(-a)=(-a)+a = 0
-pub trait AbstractNearRing<Set>: AbstractSemiring<Set> {
-    // Get additive inverse of a given element
-    fn neg(a: Set) -> Set;
+// Inverse of any element with respect to <<addition>>.
+// ∀ a ∈ S, ∃! -a, (a)+(-a)=(-a)+(a) = 0
+
+pub trait AbstractRingoidNegative<Set: BaseSet>: AbstractRingoidIdentities<Set> {
+    fn neg(a: &Set) -> Set;
 }
 
-// Near ring trait object
-pub trait NearRing: Ringoid + AbstractSemiring<Self> + Neg<Output = Self> {
-    fn as_neg(self) -> Self {
-        -self
+pub trait RingoidNegative: RingoidIdentities {
+    fn neg(&self) -> Self;
+}
+
+impl<Set: RingoidNegative> AbstractRingoidNegative<Set> for Set {
+    fn neg(a: &Set) -> Set {
+        a.neg()
     }
 }
 
-// Near ring trait object implements near ring abstract trait
-impl<Set: NearRing> AbstractNearRing<Set> for Set {
-    fn neg(a: Set) -> Set {
-        a.as_neg()
-    }
-}
+//========================================//
+// Inverse Element for <<Multiplication>> //
+//========================================//
 
-//======//
-// Ring //
-//======//
-
-// Ring is a semiring whose additive monoid is an abelian group
-// This implies that every element has an inverse with respect to addition and that addition is commutative
-// ∀ a,b ∈ S, a+b=b+a
-#[marker]
-pub trait AbstractRing<Set>: AbstractNearRing<Set> {}
-
-// Ring trait object
-#[marker]
-pub trait Ring: NearRing {}
-
-// Ring trait object satisfies ring abstract trait
-impl<Set: Ring> AbstractRing<Set> for Set {}
-
-//==================//
-// Commutative Ring //
-//==================//
-
-// Commutative ring is a ring whose multiplication operation is commutative
-// ∀ a,b ∈ S, a·b=b·a
-#[marker]
-pub trait AbstractCommutativeRing<Set>: AbstractRing<Set> {}
-
-// Commutative ring trait object
-#[marker]
-pub trait CommutativeRing: Ring {}
-
-// Commutative ring trait object implements commutative ring abstract trait
-impl<Set: CommutativeRing> AbstractCommutativeRing<Set> for Set {}
-
-// Implement ring for commutative ring
-impl<T, Set> AbstractRing<Set> for T where T: AbstractCommutativeRing<Set> {}
-impl<Set: CommutativeRing> Ring for Set {}
-
-//=======//
-// Field //
-//=======//
-
-// Field is a commutative ring which contains a multiplicative inverse for every nonzero element
+// Inverse of any NONZERO element with respect to <<multiplication>>.
 // ∀ a ∈ S, a≠0 ∈ S, ∃! a', a·a'=a'·a=1
-pub trait AbstractField<Set>: AbstractCommutativeRing<Set> {
-    // Get inverse
+
+pub trait AbstractRingoidInverse<Set: BaseSet>: AbstractRingoidIdentities<Set> {
     fn inv(a: &Set) -> Result<Set, &str>;
 }
 
-// Field trait object
-pub trait Field: CommutativeRing {
-    fn inv(&self) -> Result<Self, &str>
-    where
-        Self: Sized;
+pub trait RingoidInverse: RingoidIdentities {
+    fn inv(&self) -> Result<Self, &str>;
 }
 
-// Field trait object implements field abstract trait
-impl<Set: Field> AbstractField<Set> for Set {
+impl<Set: RingoidInverse> AbstractRingoidInverse<Set> for Set {
     fn inv(a: &Set) -> Result<Set, &str> {
         a.inv()
     }
 }
 
-// Implement commutative ring for field
-impl<T, Set> AbstractCommutativeRing<Set> for T where T: AbstractField<Set> {}
-impl<Set: Field> CommutativeRing for Set {}
+//============//
+// Structures //
+//============//
+
+//==========//
+// Semiring //
+//==========//
+
+// Semiring: ringoid such that S is a monoid under each of the two operations
+
+pub trait AbstractSemiring<Set: BaseSet> = AbstractRingoid<Set> + AbstractRingoidIdentities<Set>;
+
+pub trait Semiring = Ringoid + RingoidIdentities;
+
+//===========//
+// Near-Ring //
+//===========//
+
+// Near-ring: semiring whose additive monoid is a group
+
+pub trait AbstractNearRing<Set: BaseSet> = AbstractSemiring<Set> + AbstractRingoidNegative<Set>;
+
+pub trait NearRing = Semiring + RingoidNegative;
+
+//======//
+// Ring //
+//======//
+
+// Ring: semiring whose additive monoid is an abelian group
+
+pub trait AbstractRing<Set: BaseSet> =
+    AbstractNearRing<Set> + AbstractRingoidCommutativeAddition<Set>;
+
+pub trait Ring = NearRing + RingoidCommutativeAddition;
+
+//==================//
+// Commutative Ring //
+//==================//
+
+// Commutative ring: ring whose multiplication operation is commutative
+
+pub trait AbstractCommutativeRing<Set: BaseSet> =
+    AbstractRing<Set> + AbstractRingoidCommutativeMultiplication<Set>;
+
+pub trait CommutativeRing = Ring + RingoidCommutativeMultiplication;
+
+//=======//
+// Field //
+//=======//
+
+// Field: commutative ring which contains a multiplicative inverse for every nonzero element
+
+pub trait AbstractField<Set: BaseSet> = AbstractCommutativeRing<Set> + AbstractRingoidInverse<Set>;
+
+pub trait Field = CommutativeRing + RingoidInverse;

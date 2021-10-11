@@ -24,15 +24,15 @@ use super::BaseSet;
 // ∀ a,b ∈ S, a∙b ∈ S
 
 pub trait AbstractBinaryOperation<Set: BaseSet> {
-    fn op(lhs: Set, rhs: Set) -> Set;
+    fn op(lhs: &Set, rhs: &Set) -> Set;
 }
 
 pub trait BinaryOperation: BaseSet {
-    fn op(&self, other: Self) -> Self;
+    fn op(&self, other: &Self) -> Self;
 }
 
 impl<Set: BinaryOperation> AbstractBinaryOperation<Set> for Set {
-    fn op(lhs: Set, rhs: Set) -> Set {
+    fn op(lhs: &Set, rhs: &Set) -> Set {
         lhs.op(rhs)
     }
 }
@@ -65,6 +65,7 @@ impl<Set: CommutativeBinaryOperation> AbstractCommutativeBinaryOperation<Set> fo
 // Identity Element //
 //==================//
 
+// Identity element for a binary operation
 // ∃! e ∈ S, ∀ a ∈ S, a∙e = e∙a = a
 
 pub trait AbstractIdentityElement<Set: BaseSet>: AbstractBinaryOperation<Set> {
@@ -74,7 +75,7 @@ pub trait AbstractIdentityElement<Set: BaseSet>: AbstractBinaryOperation<Set> {
 pub trait IdentityElement: BinaryOperation {
     fn id() -> Self;
     fn set_id(&mut self) {
-        *self = Self::id()
+        *self = Self::id();
     }
     fn is_id(&self) -> bool {
         self == &Self::id()
@@ -91,6 +92,7 @@ impl<Set: IdentityElement> AbstractIdentityElement<Set> for Set {
 // Inverse Element //
 //=================//
 
+// Inverse element for a binary operation
 // ∀ a ∈ S, ∃! a' ∈ S, a∙a' = a'∙a = e
 
 pub trait AbstractInverseElement<Set: BaseSet>:
@@ -193,7 +195,7 @@ pub mod instances {
     }
 
     impl BinaryOperation for Z2 {
-        fn op(&self, other: Self) -> Self {
+        fn op(&self, other: &Self) -> Self {
             match self {
                 Z2::U => match other {
                     Z2::U => Z2::U,
