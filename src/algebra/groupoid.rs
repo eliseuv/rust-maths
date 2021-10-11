@@ -37,10 +37,7 @@ impl<Set: BinaryOperation> AbstractBinaryOperation<Set> for Set {
     }
 }
 
-//==============================//
-// Associative Binary Operation //
-//==============================//
-
+// Associativity
 // ∀ a,b,c ∈ S, (a∙b)∙c = a∙(b∙c)
 
 #[marker]
@@ -51,10 +48,7 @@ pub trait AssociativeBinaryOperation: BinaryOperation {}
 
 impl<Set: AssociativeBinaryOperation> AbstractAssociativeBinaryOperation<Set> for Set {}
 
-//==============================//
-// Commutative Binary Operation //
-//==============================//
-
+// Commutativity
 // ∀ a,b ∈ S, a∙b = b∙a
 
 #[marker]
@@ -64,6 +58,8 @@ pub trait AbstractCommutativeBinaryOperation<Set: BaseSet>: AbstractBinaryOperat
 pub trait CommutativeBinaryOperation: BinaryOperation {}
 
 impl<Set: CommutativeBinaryOperation> AbstractCommutativeBinaryOperation<Set> for Set {}
+
+// TODO: Macro that implements binary operation trait for types that satisfy std::Mul<Output = Self> trait
 
 //==================//
 // Identity Element //
@@ -183,12 +179,13 @@ pub trait AbelianGroup = Group + CommutativeBinaryOperation;
 pub mod instances {
     //! Example implementations of groupoids
     //!
+    // TODO: Implement cool examples of groupoids.
 
     use super::*;
 
     // Cyclic group of order 2 (Z_2)
-    // U ∙ A = A ∙ U = A
-    // A ∙ A = U
+    // U∙A = A∙U = A
+    // A ∙A = U
     #[derive(Debug, Clone, Copy, PartialEq)]
     pub enum Z2 {
         U,
@@ -233,14 +230,17 @@ pub mod instances {
 #[cfg(test)]
 mod tests {
 
+    // TODO: Functions that test the instances defined above. Is there a way to auto test all of the properties?
+
     use super::{instances::*, AbelianGroup};
 
+    // Test types
     fn is_abelian_group<Set: AbelianGroup>() {}
 
     #[test]
     fn groups() {
-        let u = Z2::U;
-        let a = Z2::A;
+        //let u = Z2::U;
+        //let a = Z2::A;
 
         is_abelian_group::<Z2>();
         // Test binary operation
