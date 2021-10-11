@@ -15,10 +15,12 @@
 
 // A set must have the size of its elements known at compile time and have elements distinguishable from one another
 #[marker]
-pub trait BaseSet: Sized + PartialEq {}
+pub trait BaseSet {}
 
 // Every type that satisfies these conditions can be considered a set
 impl<Set> BaseSet for Set where Set: Sized + PartialEq {}
+
+// TODO: Make trait objects work
 
 // Group-like structures
 pub mod groupoid;

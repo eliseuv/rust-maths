@@ -9,28 +9,40 @@
 //! - Abelian group: commutative group
 
 use super::BaseSet;
-use std::ops::{Mul, MulAssign};
+
+pub mod propertie
 
 //==================//
 // Binary Operation //
 //==================//
 
+// A binary operation takes two members of a set and returns a member of the same set.
+// op: S ⨉ S → S
+//     op(a,b) ↦ a·b
+// ∀ a,b ∈ S, a∙b ∈ S
+
 // Binary operation defined over a given set
-pub trait BinaryOperation<Set: BaseSet> {
-    // op: S ⨉ S → S
-    //     op(a,b) ↦ a·b
-    // ∀ a,b ∈ S, a∙b ∈ S
+pub trait AbstractBinaryOperation<Set: BaseSet> {
     fn op(lhs: Set, rhs: Set) -> Set;
+}
+
+// Binary operation defined for a given set
+pub trait BinaryOperation {
+    fn op(&self, other: Self);
 }
 
 //==============================//
 // Associative Binary Operation //
 //==============================//
 
-// Associative binary operation defined over a given set
 // ∀ a,b,c ∈ S, (a∙b)∙c = a∙(b∙c)
+
+// Associative binary operation defined over a given set
 #[marker]
-pub trait AssociativeBinaryOperation<Set: BaseSet>: BinaryOperation<Set> {}
+pub trait AbstractAssociativeBinaryOperation<Set: BaseSet>: AbstractBinaryOperation<Set> {}
+
+// Associative binary operation defined in a given set
+#[marke]
 
 //==============================//
 // Commutative Binary Operation //
@@ -39,7 +51,7 @@ pub trait AssociativeBinaryOperation<Set: BaseSet>: BinaryOperation<Set> {}
 // Commutative binary operation defined over a given set
 // ∀ a,b ∈ S, a∙b = b∙a
 #[marker]
-pub trait CommutativeBinaryOperation<Set: BaseSet>: BinaryOperation<Set> {}
+pub trait AbstractCommutativeBinaryOperation<Set: BaseSet>: AbstractBinaryOperation<Set> {}
 
 // TODO: Auto implement BinOp if CommBinOp is implemented without collision
 // If associative binary operation trait is satified so is binary operation
@@ -60,7 +72,7 @@ where
 //==================//
 
 // Defines the identity element of a given set
-pub trait IdentityElement<Set: BaseSet>: BinaryOperation<Set> {
+pub trait IdentityElement<Set: BaseSet>: AbstractBinaryOperation<Set> {
     // ∃! e ∈ S, ∀ a ∈ S, a∙e = e∙a = a
     fn id() -> Set;
 }
@@ -70,7 +82,9 @@ pub trait IdentityElement<Set: BaseSet>: BinaryOperation<Set> {
 //=================//
 
 // Returns the inverse of ANY given element in a set
-pub trait InverseElement<Set: BaseSet>: BinaryOperation<Set> + IdentityElement<Set> {
+pub trait InverseElement<Set: BaseSet>:
+    AbstractBinaryOperation<Set> + IdentityElement<Set>
+{
     // ∀ a ∈ S, ∃! a' ∈ S, a∙a' = a'∙a = e
     fn inv(a: Set) -> Set;
 }
@@ -83,40 +97,36 @@ pub trait InverseElement<Set: BaseSet>: BinaryOperation<Set> + IdentityElement<S
 
 // Abstract magma structure over a given set
 #[marker]
-pub trait AbstractMagma<Set: BaseSet>: BinaryOperation<Set> {}
+pub trait AbstractMagma<Set: BaseSet>: AbstractBinaryOperation<Set> {}
 
 // All types defining the required properties, satisfy abstract trait
 impl<T, Set> AbstractMagma<Set> for T
 where
     Set: BaseSet,
-    T: BinaryOperation<Set>,
+    T: AbstractBinaryOperation<Set>,
 {
 }
 
 // Magma trait object is a set that implements a binary operation
-pub trait Magma: BaseSet + BinaryOperation<Self> {
+pub trait Magma: BaseSet + AbstractBinaryOperation<Self>
+where
+    Self: Sized,
+{
     fn op(self, other: Self) -> Self;
 }
 
-// Once trait object is implemented, also implement abstract properties
-impl<Set: Magma> BinaryOperation<Set> for Set {
-    fn op(lhs: Set, rhs: Set) -> Set {
-        lhs.op(rhs)
+// Implement trait object for all sets
+impl<Set> Magma for Set
+where
+    Set: BaseSet + AbstractBinaryOperation<Set>,
+{
+    fn op(self, other: Set) -> Set {
+        Set::op(self, other)
     }
 }
 
 // Trait object implements abstract trait
 impl<Set: Magma> AbstractMagma<Set> for Set {}
-
-// Implement magma trait for sets with multiplication defined
-impl<Set> Magma for Set
-where
-    Set: BaseSet + Mul<Output = Self> + MulAssign,
-{
-    fn op(self, other: Self) -> Self {
-        self * other
-    }
-}
 
 //===========//
 // Semigroup //
@@ -126,22 +136,22 @@ where
 
 // Abstract semigroup over a given set
 #[marker]
-pub trait AbstractSemigroup<Set: BaseSet>: AssociativeBinaryOperation<Set> {}
+pub trait AbstractSemigroup<Set: BaseSet>: AbstractAssociativeBinaryOperation<Set> {}
 
 // All types defining the required properties, satisfy abstract trait
 impl<T, Set> AbstractSemigroup<Set> for T
 where
     Set: BaseSet,
-    T: AssociativeBinaryOperation<Set>,
+    T: AbstractAssociativeBinaryOperation<Set>,
 {
 }
 
 // Semigroup trait object is a set that implements an associative binary operation
 #[marker]
-pub trait Semigroup: Magma + AssociativeBinaryOperation<Self> {}
+pub trait Semigroup: Magma + AbstractAssociativeBinaryOperation<Self> {}
 
 // Once trait object is implemented, also implement abstract properties
-impl<Set: Semigroup> AssociativeBinaryOperation<Set> for Set {}
+impl<Set: Semigroup> AbstractAssociativeBinaryOperation<Set> for Set {}
 
 // Trait object implements abstract trait
 impl<Set: BaseSet + Semigroup> AbstractSemigroup<Set> for Set {}
@@ -195,7 +205,7 @@ impl<Set: Monoid> AbstractMonoid<Set> for Set {}
 // Abstract commutative monoid over a set
 #[marker]
 pub trait AbstractCommutativeMonoid<Set: BaseSet>:
-    AbstractMonoid<Set> + CommutativeBinaryOperation<Set>
+    AbstractMonoid<Set> + AbstractCommutativeBinaryOperation<Set>
 {
 }
 
@@ -203,16 +213,16 @@ pub trait AbstractCommutativeMonoid<Set: BaseSet>:
 impl<T, Set> AbstractCommutativeMonoid<Set> for T
 where
     Set: BaseSet,
-    T: AbstractMonoid<Set> + CommutativeBinaryOperation<Set>,
+    T: AbstractMonoid<Set> + AbstractCommutativeBinaryOperation<Set>,
 {
 }
 
 // Commutative monoid trait object
 #[marker]
-pub trait CommutativeMonoid: Monoid + CommutativeBinaryOperation<Self> {}
+pub trait CommutativeMonoid: Monoid + AbstractCommutativeBinaryOperation<Self> {}
 
 // Once trait object is implemented, also implement abstract properties
-impl<Set: CommutativeMonoid> CommutativeBinaryOperation<Set> for Set {}
+impl<Set: CommutativeMonoid> AbstractCommutativeBinaryOperation<Set> for Set {}
 
 // Trait object implements abstract trait
 impl<Set: CommutativeMonoid> AbstractCommutativeMonoid<Set> for Set {}
@@ -282,7 +292,7 @@ pub mod instances {
     //! Example implementations of groupoids
     //!
 
-    use super::{BinaryOperation, IdentityElement, InverseElement};
+    use super::{AbstractBinaryOperation, IdentityElement, InverseElement};
 
     // Cyclic group of order 2 (Z_2)
     // U ∙ A = A ∙ U = A
@@ -293,7 +303,7 @@ pub mod instances {
         A,
     }
 
-    impl BinaryOperation<Self> for Z2 {
+    impl AbstractBinaryOperation<Self> for Z2 {
         fn op(lhs: Self, rhs: Self) -> Self {
             match lhs {
                 Z2::U => match rhs {
@@ -328,7 +338,9 @@ pub mod instances {
 #[cfg(test)]
 mod tests {
 
-    use super::instances::*;
+    use super::{instances::*, Group};
+
+    fn test_group<Set: Group>(g: Set) {}
 
     #[test]
     fn groups() {

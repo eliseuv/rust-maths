@@ -9,7 +9,6 @@
 //! - Commutative ring: ring whose multiplication operation is commutative
 //! - Field: commutative ring which contains a multiplicative inverse for every nonzero element (i.e., except for the identity of the addition monoid)
 
-use super::BaseSet;
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg};
 
 //=========//
