@@ -3,14 +3,12 @@
 #![feature(marker_trait_attr)]
 #![feature(trait_alias)]
 
+// Set theory concepts
+pub mod sets;
 // Abstract algebra
 pub mod algebra;
 // Topology
-pub mod topology {}
-// Linear algebra
-pub mod linalg {}
-// Matrices numerical methods
-pub mod matrix {}
+pub mod topology;
 
 #[cfg(test)]
 mod tests {

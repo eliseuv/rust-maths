@@ -8,7 +8,7 @@
 //! - Group: monoid with an inverse for every element
 //! - Abelian group: commutative group
 
-use super::BaseSet;
+use crate::sets::BaseSet;
 
 //============//
 // Properties //
@@ -18,10 +18,10 @@ use super::BaseSet;
 // Binary Operation //
 //==================//
 
-// A binary operation takes two members of a set and returns a member of the same set.
-// op: S ⨉ S → S
-//     op(a,b) ↦ a·b
-// ∀ a,b ∈ S, a∙b ∈ S
+/// A binary operation takes two members of a set and returns a member of the same set.
+/// op: S ⨉ S → S
+///     op(a,b) ↦ a·b
+/// ∀ a,b ∈ S, a∙b ∈ S
 
 pub trait AbstractBinaryOperation<Set: BaseSet> {
     fn op(lhs: &Set, rhs: &Set) -> Set;

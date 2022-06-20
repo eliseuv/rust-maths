@@ -8,14 +8,8 @@
 //! Since the algebraic structure is completely defined by its properties, the structure trait is defined as type alias for its properties.
 //! Once the properties are implemented the type is marked as given algebric structure.
 
-//==========//
-// Base Set //
-//==========//
-
-// A set must have the size of its elements known at compile time and have elements distinguishable from one another
-pub trait BaseSet = Sized + PartialEq;
-
-// Group-like structures
+/// Group-like structures
 pub mod groupoid;
-// Ring-like structures
+
+/// Ring-like structures
 pub mod ringoid;
